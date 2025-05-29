@@ -4,17 +4,19 @@ author: "Rachna Radhakrishna & Sravan "
 format: html
 editor: visual
 ---
+
 ## Executive Summary
 
 This report explores global patterns in plastic pollution based on the 2021 TidyTuesday dataset contributed by Break Free From Plastic. The dataset includes detailed records of plastic items collected during beach cleanups across more than 50 countries, categorized by company (e.g., Coca-Cola, Nestlé), plastic type (e.g., PET, HDPE), and location. Our goal is to identify the top polluting companies globally and analyze variations in plastic waste across regions.
 
----
+------------------------------------------------------------------------
 
 ## Introduction
 
 Plastic pollution is a pressing environmental issue, particularly in marine ecosystems where accumulated waste threatens wildlife and water quality. The dataset used in this report provides counts of branded and unbranded plastic items collected during cleanup events between 2019 and 2020. Each observation includes country, brand name (if known), type of plastic material, number of volunteers, and total waste collected. This project aims to explore which companies contribute most to this problem, and how their pollution footprint varies by country.
 
 ## Methodology
+
 ## Load Library
 
 ```{r load-data, message=FALSE, warning=FALSE}
@@ -28,18 +30,58 @@ plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytues
 ```
 
 
----
+------------------------------------------------------------------------
 
 ## What’s in the `plastics.csv` File?
 
-| Column             | Description                                               |
-|--------------------|-----------------------------------------------------------|
-| `year`             | Year of the cleanup (mostly 2020)                         |
-| `country`          | Country where cleanup was reported                        |
-| `parent_company`   | Brand or company name (e.g., Coca-Cola, Nestlé)           |
-| `num_events`       | Number of cleanup events held                             |
-| `volunteers`       | Number of participants                                    |
-| `grand_total`      | Total plastic items collected                             |
-| `hdpe`, `ldpe`, etc.| Counts of each plastic type (by material category)       |
+| Column               | Description                                        |
+|-------------------|-----------------------------------------------------|
+| `year`               | Year of the cleanup (mostly 2020)                  |
+| `country`            | Country where cleanup was reported                 |
+| `parent_company`     | Brand or company name (e.g., Coca-Cola, Nestlé)    |
+| `num_events`         | Number of cleanup events held                      |
+| `volunteers`         | Number of participants                             |
+| `grand_total`        | Total plastic items collected                      |
+| `hdpe`, `ldpe`, etc. | Counts of each plastic type (by material category) |
 
----
+------------------------------------------------------------------------
+```{r}
+#| label: fig-top_companies
+#| fig-cap: "Top 10 Companies Contributing to Plastic Pollution"
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 6
+#| fig-height: 4
+
+library(ggthemes)
+library(RColorBrewer)
+
+top_companies <- plastics %>%
+  filter(!is.na(parent_company), parent_company != "Grand Total") %>%
+  group_by(parent_company) %>%
+  summarise(total_plastics = sum(grand_total, na.rm = TRUE)) %>%
+  arrange(desc(total_plastics)) %>%
+  slice_head(n = 10)
+
+ggplot(top_companies, aes(x = reorder(parent_company, total_plastics), y = total_plastics, fill = parent_company)) +
+  geom_col(width = 0.6, color = "black", show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Top 10 Plastic Polluting Companies",
+    subtitle = "Based on total plastic items collected during cleanups (2019–2020)",
+    x = "Company",
+    y = "Total Plastic Items",
+    caption = "Source: TidyTuesday 2021-01-26"
+  ) +
+  theme_fivethirtyeight(base_size = 10) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0),
+    plot.subtitle = element_text(color = "gray30", size = 10, hjust = 0),
+    plot.caption = element_text(size = 8, hjust = 0),
+    axis.title = element_text(size = 10)
+  )
+
+```
+
