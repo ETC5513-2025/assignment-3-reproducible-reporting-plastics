@@ -1,7 +1,11 @@
 ---
 title: "Ocean Plastics Pollution"
 author: "Rachna Radhakrishna & Sravan "
-format: html
+format: 
+  html:
+    toc: true
+    toc-depth: 2
+    toc-title: "Contents"
 editor: visual
 ---
 ## Executive Summary
