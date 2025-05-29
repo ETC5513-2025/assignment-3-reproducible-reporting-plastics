@@ -4,17 +4,19 @@ author: "Rachna Radhakrishna & Sravan "
 format: html
 editor: visual
 ---
+
 ## Executive Summary
 
 This report explores global patterns in plastic pollution based on the 2021 TidyTuesday dataset contributed by Break Free From Plastic. The dataset includes detailed records of plastic items collected during beach cleanups across more than 50 countries, categorized by company (e.g., Coca-Cola, Nestlé), plastic type (e.g., PET, HDPE), and location. Our goal is to identify the top polluting companies globally and analyze variations in plastic waste across regions.
 
----
+------------------------------------------------------------------------
 
 ## Introduction
 
 Plastic pollution is a pressing environmental issue, particularly in marine ecosystems where accumulated waste threatens wildlife and water quality. The dataset used in this report provides counts of branded and unbranded plastic items collected during cleanup events between 2019 and 2020. Each observation includes country, brand name (if known), type of plastic material, number of volunteers, and total waste collected. This project aims to explore which companies contribute most to this problem, and how their pollution footprint varies by country.
 
 ## Methodology
+
 ## Load Library
 
 ```{r load-data, message=FALSE, warning=FALSE}
@@ -37,19 +39,91 @@ cleaned_plastics <- plastics %>%
   )
 ```
 
-
----
+------------------------------------------------------------------------
 
 ## What’s in the `plastics.csv` File?
 
-| Column             | Description                                               |
-|--------------------|-----------------------------------------------------------|
-| `year`             | Year of the cleanup (mostly 2020)                         |
-| `country`          | Country where cleanup was reported                        |
-| `parent_company`   | Brand or company name (e.g., Coca-Cola, Nestlé)           |
-| `num_events`       | Number of cleanup events held                             |
-| `volunteers`       | Number of participants                                    |
-| `grand_total`      | Total plastic items collected                             |
-| `hdpe`, `ldpe`, etc.| Counts of each plastic type (by material category)       |
+| Column               | Description                                        |
+|-------------------|-----------------------------------------------------|
+| `year`               | Year of the cleanup (mostly 2020)                  |
+| `country`            | Country where cleanup was reported                 |
+| `parent_company`     | Brand or company name (e.g., Coca-Cola, Nestlé)    |
+| `num_events`         | Number of cleanup events held                      |
+| `volunteers`         | Number of participants                             |
+| `grand_total`        | Total plastic items collected                      |
+| `hdpe`, `ldpe`, etc. | Counts of each plastic type (by material category) |
 
----
+------------------------------------------------------------------------
+
+```{r}
+library(tidyverse)
+plastic <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv")
+
+plastic_summary <- plastics %>%
+  filter(!is.na(parent_company), parent_company != "null") %>%
+  group_by(country, parent_company) %>%
+  summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_plastic)) %>%
+  slice_head(n = 10)
+
+kable(plastic_summary, caption = "Top Companies Contributing to Plastic Waste by Country (Top 10)")
+```
+
+This table shows the top 10 combinations of countries and companies where the most plastic items were collected during cleanup events.
+
+It also shows the following content:
+
+-   The country where plastic was collected.
+
+-   The company whose products like bottles or wrappers were found.
+
+-   The total number of plastic items linked to that company in that country.\
+
+Consider an example in the Philippines, the most plastic waste came from products made by Coca-Cola, with over 12,000 pieces found. In Indonesia, a large amount of plastic came from Nestle. Pepsi Co was a major contributor in India and Mexico.
+
+Here the global brands like Coca-Cola, Nestle and Pepsi Co are frequently linked to high plastic waste levels across different countries. This information is important because it can help governments, organizations and companies take responsibility and plan better waste management or packing strategies.
+
+**Most Common Plastic Types Collected.\
+**
+
+```{r}
+library(tidyverse)
+
+plastic <- read_csv ("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv")
+colnames(plastic)
+plastic_types <- c("hdpe", "ldpe", "o", "pet","pp", "ps", "pvc")
+
+plastic_counts <- plastic %>%
+  select(all_of(plastic_types)) %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>%
+  pivot_longer(cols = everything(), names_to = "plastic_type", values_to = "total_items")%>%
+  arrange(desc(total_items))
+
+ggplot(plastic_counts, aes(x = reorder(plastic_type, total_items), y = total_items, fill = plastic_type)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Most Common Plastic Types Collected",
+    x = "Plastic Type",
+    y = "Total Items Collected"
+  ) +
+  theme_minimal()
+
+
+
+  
+
+```
+
+The above bar chat indicates which type of plastic were most commonly collected during cleanup events around the world and each bar represents a specific type of plastic, and the height of the bar shows the total number of items made from that material. The chat includes well known plastics like:\
+**PET** (Polyethylene Terephthalate): Commonly used in plastic drink bottles.
+
+**LDPE** (Low-Density Polyethylene) : Often found in plastic bags and packing films.
+
+**PP** (Polypropylene): Used in bottles caps, food containers and straws.
+
+**HDPE** (High-Density Polyethylene) It is a strong, durable and widely used type of plastic made from petroleum.
+
+**PS** (Polystyrene): Found in disposable cutlery and foam packing.
+
+**PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packing.
