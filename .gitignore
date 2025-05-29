@@ -1,4 +1,7 @@
+# RStudio files
 .Rproj.user/
 .Rhistory
 .RData
+.Ruserdata
 *.Rproj
+renv/
