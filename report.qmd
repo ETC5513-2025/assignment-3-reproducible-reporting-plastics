@@ -17,28 +17,56 @@ Plastic pollution is a pressing environmental issue, particularly in marine ecos
 
 ## Methodology
 
-## Load Library
 
-```{r load-data, message=FALSE, warning=FALSE}
+
+```{r load-libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(viridis)
 library(knitr)
 library(janitor)
-#install.packages("janitor")
-
-# Load the pre-cleaned data from TidyTuesday
-plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv") %>%
-  clean_names()  # Standardizes column names to snake_case
-
-cleaned_plastics <- plastics %>%
-  clean_names() %>%
-  mutate(parent_company = str_trim(str_to_title(parent_company))) %>%  # Standardize casing & trim whitespace
-  filter(
-    !is.na(parent_company),
-    !str_detect(parent_company, "(?i)^(Null|N/?A|Unbranded)$")  # This makes it case-insensitive
-  )
 ```
 
+```{r load-data-raw, echo=FALSE, message=FALSE, warning=FALSE}
+# Load and clean data
+plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv") %>%
+  clean_names()
+
+```
+
+```{r clean-data, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Clean data
+cleaned_plastics <- plastics %>%
+  clean_names() %>%
+  mutate(
+    # Clean parent_company names
+    parent_company = str_trim(str_to_title(parent_company)),
+    parent_company = str_replace_all(parent_company, "Coca Cola", "The Coca-Cola Company"),
+    parent_company = str_replace_all(parent_company, "Nestlé", "Nestle"),
+    parent_company = case_when(
+      str_detect(parent_company, "(?i)^(Grand Total)$") ~ NA_character_,
+      str_detect(parent_company, "(?i)^(Null|N/?A|Assorted|Unbranded)$") ~ "Unbranded",
+      TRUE ~ parent_company
+    )
+  ) %>%
+  # Clean country names
+  mutate(
+    country = str_trim(str_to_title(country)),
+    country = str_replace_all(country, "_", " "),
+    country = case_when(
+      country == "Empty" ~ NA_character_,
+      country == "Cote D Ivoire" ~ "Côte d'Ivoire",
+      country == "Cote D ivoire" ~ "Côte d'Ivoire",
+      country == "Taiwan Republic Of China (Roc)" ~ "Taiwan",
+      country == "Taiwan  Republic Of China (Roc)" ~ "Taiwan",
+      country == "Korea" ~ "South Korea",
+      country == "United Kingdom Of Great Britain & Northern Ireland" ~ "United Kingdom",
+      country == "United States Of America" ~ "United States",
+      TRUE ~ country
+    )
+  ) %>%
+  filter(!is.na(parent_company))
+```
 ------------------------------------------------------------------------
 
 ## What’s in the `plastics.csv` File?
@@ -55,10 +83,7 @@ cleaned_plastics <- plastics %>%
 
 ------------------------------------------------------------------------
 
-```{r}
-library(tidyverse)
-plastic <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv")
-
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 plastic_summary <- plastics %>%
   filter(!is.na(parent_company), parent_company != "null") %>%
   group_by(country, parent_company) %>%
