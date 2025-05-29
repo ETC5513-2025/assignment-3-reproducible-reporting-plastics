@@ -1,6 +1,6 @@
 ---
 title: "Ocean Plastics Pollution"
-author: "Rachna Radhakrishna & Sravan "
+author: "Rachna Radhakrishna & Sravan Kumar"
 format: html
 editor: visual
 ---
@@ -17,24 +17,23 @@ Plastic pollution is a pressing environmental issue, particularly in marine ecos
 
 ## Methodology
 
-
+Before starting the analysis, we cleaned the dataset to make it consistent and easier to work with. Company names were cleaned by fixing capital letters, removing extra spaces, and grouping unclear labels like "Null", "N/A", and "Assorted" under one category called "Unbranded". We also removed rows labeled "Grand Total" since they were just totals and not real data points. Country names were tidied up to fix spelling and formatting issues (like changing "Cote D Ivoire" to "Côte d'Ivoire"). We made sure all plastic count columns were treated as numbers, and replaced missing values with zero when it made sense.
 
 ```{r load-libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(viridis)
 library(knitr)
 library(janitor)
+library(ggthemes)
 ```
 
 ```{r load-data-raw, echo=FALSE, message=FALSE, warning=FALSE}
 # Load and clean data
 plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv") %>%
   clean_names()
-
 ```
 
 ```{r clean-data, echo=FALSE, message=FALSE, warning=FALSE}
-
 # Clean data
 cleaned_plastics <- plastics %>%
   clean_names() %>%
@@ -65,23 +64,114 @@ cleaned_plastics <- plastics %>%
       TRUE ~ country
     )
   ) %>%
-  filter(!is.na(parent_company))
+  filter(!is.na(parent_company), !is.na(country))
 ```
 ------------------------------------------------------------------------
 
-## What’s in the `plastics.csv` File?
+### What’s in the `cleaned_plastics` dataset?
 
-| Column               | Description                                        |
-|----------------------|----------------------------------------------------|
-| `year`               | Year of the cleanup (mostly 2020)                  |
-| `country`            | Country where cleanup was reported                 |
-| `parent_company`     | Brand or company name (e.g., Coca-Cola, Nestlé)    |
-| `num_events`         | Number of cleanup events held                      |
-| `volunteers`         | Number of participants                             |
-| `grand_total`        | Total plastic items collected                      |
-| `hdpe`, `ldpe`, etc. | Counts of each plastic type (by material category) |
+| Column           | Description                                      |
+|------------------|--------------------------------------------------|
+| `country`        | Country where the cleanup took place             |
+| `year`           | Year of data collection (2019 or 2020)           |
+| `parent_company` | Brand or company name (e.g., Coca-Cola, Nestle)  |
+| `empty`          | Count of unidentifiable or label-less plastics   |
+| `hdpe`           | Count of HDPE (High-Density Polyethylene) items |
+| `ldpe`           | Count of LDPE (Low-Density Polyethylene) items  |
+| `o`              | Count of miscellaneous or other plastic types    |
+| `pet`            | Count of PET (Polyethylene Terephthalate) items |
+| `pp`             | Count of PP (Polypropylene) items                |
+| `ps`             | Count of PS (Polystyrene) items                  |
+| `pvc`            | Count of PVC (Polyvinyl Chloride) items          |
+| `grand_total`    | Total plastic items collected (all types)        |
+| `num_events`     | Number of cleanup events                         |
+| `volunteers`     | Number of participants involved in cleanups      |
 
 ------------------------------------------------------------------------
+
+
+
+```{r top_companies_chunk, echo=FALSE, message=FALSE, warning=FALSE}
+top_companies <- cleaned_plastics %>%
+  group_by(country, parent_company) %>%
+  summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_plastic)) %>%
+  slice_head(n = 10)
+
+kable(top_companies, caption = "Top Companies Contributing to Plastic Waste by Country (Top 10)")
+
+```
+```{r}
+top_companies <- cleaned_plastics %>%
+  group_by(parent_company) %>%
+  summarise(total_plastics = sum(grand_total, na.rm = TRUE)) %>%
+  arrange(desc(total_plastics)) %>%
+  slice_head(n = 10)
+
+top_companies
+```
+
+
+
+```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
+# Step 1: Get top 10 countries by total plastic collected
+top_countries <- cleaned_plastics %>%
+  group_by(country) %>%
+  summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_plastic)) %>%
+  slice_head(n = 10) %>%
+  pull(country)
+
+# Step 2: Summarize plastic type totals for those countries
+plastic_types_by_country <- cleaned_plastics %>%
+  filter(country %in% top_countries) %>%
+  group_by(country) %>%
+  summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
+  pivot_longer(-country, names_to = "plastic_type", values_to = "count")
+
+# Step 3: Heatmap
+ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, -count), fill = count)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "D") +
+  labs(
+    title = "Plastic Types Collected by Top 10 Countries",
+    x = "Plastic Type",
+    y = "Country",
+    fill = "Items Collected",
+    caption = "Source: TidyTuesday 2021-01-26"
+  ) +
+  theme_fivethirtyeight(base_size = 10)  # ← Replace with your choice
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+plastic_types_by_country <- cleaned_plastics %>%
+  group_by(country) %>%
+  summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
+  pivot_longer(-country, names_to = "plastic_type", values_to = "count")
+
+ggplot(plastic_types_by_country, aes(x = plastic_type, y = reorder(country, -count), fill = count)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Plastic Types Collected by Country",
+    x = "Plastic Type",
+    y = "Country",
+    fill = "Items Collected",
+    caption = "Source: TidyTuesday 2021-01-26"
+  ) +
+  theme_minimal()
+
+```
+
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 plastic_summary <- plastics %>%
