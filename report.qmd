@@ -10,13 +10,13 @@ editor: visual
 ---
 
 ## Executive Summary
-
+*Sravan edit this please*
 This report explores global patterns in plastic pollution based on the 2021 TidyTuesday dataset contributed by Break Free From Plastic. The dataset includes detailed records of plastic items collected during beach cleanups across more than 50 countries, categorized by company (e.g., Coca-Cola, Nestlé), plastic type (e.g., PET, HDPE), and location. Our goal is to identify the top polluting companies globally and analyze variations in plastic waste across regions.
 
 ------------------------------------------------------------------------
 
 ## Introduction
-
+*Sravan edit this please*
 Plastic pollution is a pressing environmental issue, particularly in marine ecosystems where accumulated waste threatens wildlife and water quality. The dataset used in this report provides counts of branded and unbranded plastic items collected during cleanup events between 2019 and 2020. Each observation includes country, brand name (if known), type of plastic material, number of volunteers, and total waste collected. This project aims to explore which companies contribute most to this problem, and how their pollution footprint varies by country.
 
 ## Methodology
@@ -25,15 +25,13 @@ Before starting the analysis, we cleaned the dataset to make it consistent and e
 
 ```{r load-libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
+library(janitor)
 library(viridis)
 library(knitr)
-library(janitor)
 library(ggthemes)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
 library(forcats)
-library(skimr)
+library(readr)
+library(kableExtra)
 ```
 
 ```{r load-data-raw, echo=FALSE, message=FALSE, warning=FALSE}
@@ -99,12 +97,55 @@ cleaned_plastics <- plastics %>%
 
 ------------------------------------------------------------------------
 
+###Most Common Plastic Types Collected
+
+```{r simple_bar_plot, echo=FALSE, message=FALSE, warning=FALSE}
+# Define the plastic types
+plastic_types <- c("hdpe", "ldpe", "o", "pet", "pp", "ps", "pvc")
+
+# Summarise total items by type from cleaned dataset
+plastic_counts <- cleaned_plastics %>%
+  select(all_of(plastic_types)) %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>%
+  pivot_longer(cols = everything(), names_to = "plastic_type", values_to = "total_items") %>%
+  arrange(desc(total_items))
+
+# Plot
+ggplot(plastic_counts, aes(x = reorder(plastic_type, total_items), y = total_items, fill = plastic_type)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_viridis_d(option = "E") +  # Use colorblind-friendly palette
+  labs(
+    title = "Fig.1 - Most Common Plastic Types Collected",
+    x = "Plastic Type",
+    y = "Total Items Collected"
+  ) +
+  theme_light(base_size = 10)
+
+  
+
+```
+The above bar chat indicates which type of plastic were most commonly collected during cleanup events around the world and each bar represents a specific type of plastic, and the height of the bar shows the total number of items made from that material. The chat includes well known plastics like:\
+**PET** (Polyethylene Terephthalate): Commonly used in plastic drink bottles.
+
+**LDPE** (Low-Density Polyethylene) : Often found in plastic bags and packing films.
+
+**PP** (Polypropylene): Used in bottles caps, food containers and straws.
+
+**HDPE** (High-Density Polyethylene) It is a strong, durable and widely used type of plastic made from petroleum.
+
+**PS** (Polystyrene): Found in disposable cutlery and foam packing.
+
+**PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packing.
+
+*@ Sravan please condense the above and connect to next analysis*
+
 
 ### Top Contributing Companies to Plastic Waste
 
 ```{r top_companies_chunk, echo=FALSE, message=FALSE, warning=FALSE}
-
 library(kableExtra)
+
 top_companies <- cleaned_plastics %>%
   group_by(parent_company) %>%
   summarise(total_plastics = sum(grand_total, na.rm = TRUE)) %>%
@@ -127,9 +168,9 @@ top_companies %>%
 
 ```
 
-Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. Interestingly, the majority of the waste—over 400,000 items—was unbranded, which means it couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever. Overall, the data shows that while big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources. Let's look deeper into the type of waste generated in large masses 
+Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. Interestingly, the majority of the waste—over 400,000 items—was unbranded, which means it couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever. Overall, the data shows that while big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources. Let's dive deeper into the type of plastic waste generated and which country does so in large masses.
 
-```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
+```{r country_plastic_relation, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
 #Get top 10 countries by total plastic collected
 top_countries <- cleaned_plastics %>%
   group_by(country) %>%
@@ -152,25 +193,10 @@ skim(plastic_types_by_country$count)
 
 
 ```
+right skew - use lof transform to normalize and visualize
+log transformation on a skewed dataset is a common and effective form of normalization
 
-```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
-
-# Step 3: Heatmap
-ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, -count), fill = count)) +
-  geom_tile(color = "white") +
-  scale_fill_viridis_c(option = "D") +
-  labs(
-    title = "Plastic Types Collected by Top 10 Countries",
-    x = "Plastic Type",
-    y = "Country",
-    fill = "Items Collected",
-    caption = "Source: TidyTuesday 2021-01-26"
-  ) +
-  theme_fivethirtyeight(base_size = 10)
-
-```
-
-````{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=10}
 # Top 10 countries
 top_countries <- cleaned_plastics %>%
   group_by(country) %>%
@@ -190,9 +216,7 @@ plastic_types_by_country <- cleaned_plastics %>%
 ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, -count), fill = count)) +
   geom_tile(color = "white") +
   geom_text(aes(label = ifelse(count > 0, count, "")), size = 3, color = "white") +
-  scale_fill_viridis_c(option = "D", trans = "log1p", breaks = c(1, 100, 1000, 10000, 50000, 100000),
-  labels = scales::comma_format(),
-  name = "Items Collected") +
+  scale_fill_viridis_c(option = "D", trans = "log1p") +
   labs(
     title = "Plastic Types Collected by Top 10 Countries",
     x = "Plastic Type",
@@ -200,115 +224,18 @@ ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, 
     fill = "Items Collected (log scale)",
     caption = "Source: TidyTuesday 2021-01-26"
   ) +
-  theme_fivethirtyeight(base_size = 10)
-
-````
-
-```{r}
-library(ggplot2)
-
-plastics_filtered %>%
-  ggplot(aes(x = plastic_type, y = items_collected, fill = plastic_type)) +
-  geom_col() +
-  facet_wrap(~ country, scales = "free_y") +
-  theme_minimal() +
-  labs(
-    title = "Plastic Types Collected by Country",
-    x = "Plastic Type", y = "Items Collected"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme_minimal(base_size = 10)
 
 ```
 
-```{r}
-```
-
-```{r}
-plastic_types_by_country <- cleaned_plastics %>%
-  group_by(country) %>%
-  summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
-  pivot_longer(-country, names_to = "plastic_type", values_to = "count")
-
-ggplot(plastic_types_by_country, aes(x = plastic_type, y = reorder(country, -count), fill = count)) +
-  geom_tile(color = "white") +
-  scale_fill_viridis_c() +
-  labs(
-    title = "Plastic Types Collected by Country",
-    x = "Plastic Type",
-    y = "Country",
-    fill = "Items Collected",
-    caption = "Source: TidyTuesday 2021-01-26"
-  ) +
-  theme_minimal()
-
-```
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-plastic_summary <- plastics %>%
-  filter(!is.na(parent_company), parent_company != "null") %>%
-  group_by(country, parent_company) %>%
-  summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(total_plastic)) %>%
-  slice_head(n = 10)
-
-kable(plastic_summary, caption = "Top Companies Contributing to Plastic Waste by Country (Top 10)")
-```
-
-This table shows the top 10 combinations of countries and companies where the most plastic items were collected during cleanup events.
-
-It also shows the following content:
-
--   The country where plastic was collected.
-
--   The company whose products like bottles or wrappers were found.
-
--   The total number of plastic items linked to that company in that country.\
+This Figure shows the top 10 combinations of countries and type of plastic collected during cleanup events.
 
 Consider an example in the Philippines, the most plastic waste came from products made by Coca-Cola, with over 12,000 pieces found. In Indonesia, a large amount of plastic came from Nestle. Pepsi Co was a major contributor in India and Mexico.
 
 Here the global brands like Coca-Cola, Nestle and Pepsi Co are frequently linked to high plastic waste levels across different countries. This information is important because it can help governments, organizations and companies take responsibility and plan better waste management or packing strategies.
 
-**Most Common Plastic Types Collected.\
-**
-
-```{r}
-library(tidyverse)
-
-plastic <- read_csv ("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv")
-colnames(plastic)
-plastic_types <- c("hdpe", "ldpe", "o", "pet","pp", "ps", "pvc")
-
-plastic_counts <- plastic %>%
-  select(all_of(plastic_types)) %>%
-  summarise(across(everything(), sum, na.rm = TRUE)) %>%
-  pivot_longer(cols = everything(), names_to = "plastic_type", values_to = "total_items")%>%
-  arrange(desc(total_items))
-
-ggplot(plastic_counts, aes(x = reorder(plastic_type, total_items), y = total_items, fill = plastic_type)) +
-  geom_bar(stat = "identity", show.legend = FALSE) +
-  coord_flip() +
-  labs(
-    title = "Most Common Plastic Types Collected",
-    x = "Plastic Type",
-    y = "Total Items Collected"
-  ) +
-  theme_minimal()
+*(@ Sravan Condense this information into valuable insights. Describe based off of heat map)*
 
 
 
-  
 
-```
-
-The above bar chat indicates which type of plastic were most commonly collected during cleanup events around the world and each bar represents a specific type of plastic, and the height of the bar shows the total number of items made from that material. The chat includes well known plastics like:\
-**PET** (Polyethylene Terephthalate): Commonly used in plastic drink bottles.
-
-**LDPE** (Low-Density Polyethylene) : Often found in plastic bags and packing films.
-
-**PP** (Polypropylene): Used in bottles caps, food containers and straws.
-
-**HDPE** (High-Density Polyethylene) It is a strong, durable and widely used type of plastic made from petroleum.
-
-**PS** (Polystyrene): Found in disposable cutlery and foam packing.
-
-**PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packing.
