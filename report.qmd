@@ -70,54 +70,72 @@ cleaned_plastics <- plastics %>%
   ) %>%
   filter(!is.na(parent_company), !is.na(country))
 ```
+
 ------------------------------------------------------------------------
 
 ### What’s in the `cleaned_plastics` dataset?
 
-| Column           | Description                                      |
-|------------------|--------------------------------------------------|
-| `country`        | Country where the cleanup took place             |
-| `year`           | Year of data collection (2019 or 2020)           |
-| `parent_company` | Brand or company name (e.g., Coca-Cola, Nestle)  |
-| `empty`          | Count of unidentifiable or label-less plastics   |
+| Column           | Description                                     |
+|------------------|-------------------------------------------------|
+| `country`        | Country where the cleanup took place            |
+| `year`           | Year of data collection (2019 or 2020)          |
+| `parent_company` | Brand or company name (e.g., Coca-Cola, Nestle) |
+| `empty`          | Count of unidentifiable or label-less plastics  |
 | `hdpe`           | Count of HDPE (High-Density Polyethylene) items |
 | `ldpe`           | Count of LDPE (Low-Density Polyethylene) items  |
-| `o`              | Count of miscellaneous or other plastic types    |
+| `o`              | Count of miscellaneous or other plastic types   |
 | `pet`            | Count of PET (Polyethylene Terephthalate) items |
-| `pp`             | Count of PP (Polypropylene) items                |
-| `ps`             | Count of PS (Polystyrene) items                  |
-| `pvc`            | Count of PVC (Polyvinyl Chloride) items          |
-| `grand_total`    | Total plastic items collected (all types)        |
-| `num_events`     | Number of cleanup events                         |
-| `volunteers`     | Number of participants involved in cleanups      |
+| `pp`             | Count of PP (Polypropylene) items               |
+| `ps`             | Count of PS (Polystyrene) items                 |
+| `pvc`            | Count of PVC (Polyvinyl Chloride) items         |
+| `grand_total`    | Total plastic items collected (all types)       |
+| `num_events`     | Number of cleanup events                        |
+| `volunteers`     | Number of participants involved in cleanups     |
 
 ------------------------------------------------------------------------
 
-
-
-```{r top_companies_chunk, echo=FALSE, message=FALSE, warning=FALSE}
-top_companies <- cleaned_plastics %>%
+```{r top_countries_chunk, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+top_countries <- cleaned_plastics %>%
   group_by(country, parent_company) %>%
   summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
   arrange(desc(total_plastic)) %>%
   slice_head(n = 10)
 
-kable(top_companies, caption = "Top Companies Contributing to Plastic Waste by Country (Top 10)")
+kable(top_countries, caption = "Top Companies Contributing to Plastic Waste by Country (Top 10)")
+#(verify whether this chunk is needed, change eval options if yes)
 
 ```
 
+### Top Contributing Companies to Plastic Waste
 
-```{r}
+```{r top_companies_chunk, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(kableExtra)
 top_companies <- cleaned_plastics %>%
   group_by(parent_company) %>%
   summarise(total_plastics = sum(grand_total, na.rm = TRUE)) %>%
   arrange(desc(total_plastics)) %>%
   slice_head(n = 10)
 
-top_companies
+top_companies %>%
+  kable(
+    caption = "Table 1. Top Companies Contributing to Plastic Waste",
+    col.names = c("Company", "Total Plastics"),
+    align = "lc",  # left-align company, center-align plastics
+    format = "html"  # use "latex" for PDF output
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center"
+  ) %>%
+  row_spec(0, bold = TRUE, background = "#f7f7f7")
+
 ```
 
+### Top Contributing Companies to Plastic Waste
 
+Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. Interestingly, the majority of the waste—over 400,000 items—was unbranded, which means it couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever. Overall, the data shows that while big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources.
 
 ```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
 # Step 1: Get top 10 countries by total plastic collected
@@ -150,10 +168,8 @@ ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, 
 
 ```
 
-
 ```{r}
 ```
-
 
 ```{r}
 ```
@@ -177,7 +193,6 @@ ggplot(plastic_types_by_country, aes(x = plastic_type, y = reorder(country, -cou
   theme_minimal()
 
 ```
-
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 plastic_summary <- plastics %>%
