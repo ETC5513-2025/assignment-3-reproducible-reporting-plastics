@@ -44,7 +44,7 @@ cleaned_plastics <- plastics %>%
 ## What’s in the `plastics.csv` File?
 
 | Column               | Description                                        |
-|-------------------|-----------------------------------------------------|
+|----------------------|----------------------------------------------------|
 | `year`               | Year of the cleanup (mostly 2020)                  |
 | `country`            | Country where cleanup was reported                 |
 | `parent_company`     | Brand or company name (e.g., Coca-Cola, Nestlé)    |
