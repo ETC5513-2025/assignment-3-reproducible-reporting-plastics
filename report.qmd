@@ -23,10 +23,20 @@ Plastic pollution is a pressing environmental issue, particularly in marine ecos
 library(tidyverse)
 library(viridis)
 library(knitr)
+library(janitor)
+#install.packages("janitor")
 
-plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv")
+# Load the pre-cleaned data from TidyTuesday
+plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv") %>%
+  clean_names()  # Standardizes column names to snake_case
 
-#glimpse(plastics)
+cleaned_plastics <- plastics %>%
+  clean_names() %>%
+  mutate(parent_company = str_trim(str_to_title(parent_company))) %>%  # Standardize casing & trim whitespace
+  filter(
+    !is.na(parent_company),
+    !str_detect(parent_company, "(?i)^(Null|N/?A|Unbranded)$")  # This makes it case-insensitive
+  )
 ```
 
 
