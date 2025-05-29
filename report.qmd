@@ -29,6 +29,11 @@ library(viridis)
 library(knitr)
 library(janitor)
 library(ggthemes)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(skimr)
 ```
 
 ```{r load-data-raw, echo=FALSE, message=FALSE, warning=FALSE}
@@ -94,17 +99,6 @@ cleaned_plastics <- plastics %>%
 
 ------------------------------------------------------------------------
 
-```{r top_countries_chunk, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
-top_countries <- cleaned_plastics %>%
-  group_by(country, parent_company) %>%
-  summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(total_plastic)) %>%
-  slice_head(n = 10)
-
-kable(top_countries, caption = "Top Companies Contributing to Plastic Waste by Country (Top 10)")
-#(verify whether this chunk is needed, change eval options if yes)
-
-```
 
 ### Top Contributing Companies to Plastic Waste
 
@@ -133,12 +127,10 @@ top_companies %>%
 
 ```
 
-### Top Contributing Companies to Plastic Waste
-
-Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. Interestingly, the majority of the waste—over 400,000 items—was unbranded, which means it couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever. Overall, the data shows that while big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources.
+Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. Interestingly, the majority of the waste—over 400,000 items—was unbranded, which means it couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever. Overall, the data shows that while big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources. Let's look deeper into the type of waste generated in large masses 
 
 ```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
-# Step 1: Get top 10 countries by total plastic collected
+#Get top 10 countries by total plastic collected
 top_countries <- cleaned_plastics %>%
   group_by(country) %>%
   summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
@@ -146,12 +138,22 @@ top_countries <- cleaned_plastics %>%
   slice_head(n = 10) %>%
   pull(country)
 
-# Step 2: Summarize plastic type totals for those countries
+#merged Sravan's input here
+
+#Summarize plastic type totals for those countries
 plastic_types_by_country <- cleaned_plastics %>%
   filter(country %in% top_countries) %>%
   group_by(country) %>%
   summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
   pivot_longer(-country, names_to = "plastic_type", values_to = "count")
+
+#summary(plastic_types_by_country$count)
+skim(plastic_types_by_country$count)
+
+
+```
+
+```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
 
 # Step 3: Heatmap
 ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, -count), fill = count)) +
@@ -164,11 +166,58 @@ ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, 
     fill = "Items Collected",
     caption = "Source: TidyTuesday 2021-01-26"
   ) +
-  theme_fivethirtyeight(base_size = 10)  # ← Replace with your choice
+  theme_fivethirtyeight(base_size = 10)
 
 ```
 
+````{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+# Top 10 countries
+top_countries <- cleaned_plastics %>%
+  group_by(country) %>%
+  summarise(total_plastic = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_plastic)) %>%
+  slice_head(n = 10) %>%
+  pull(country)
+
+# Summarise plastic types
+plastic_types_by_country <- cleaned_plastics %>%
+  filter(country %in% top_countries) %>%
+  group_by(country) %>%
+  summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
+  pivot_longer(-country, names_to = "plastic_type", values_to = "count")
+
+# Heatmap with labels
+ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, -count), fill = count)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = ifelse(count > 0, count, "")), size = 3, color = "white") +
+  scale_fill_viridis_c(option = "D", trans = "log1p", breaks = c(1, 100, 1000, 10000, 50000, 100000),
+  labels = scales::comma_format(),
+  name = "Items Collected") +
+  labs(
+    title = "Plastic Types Collected by Top 10 Countries",
+    x = "Plastic Type",
+    y = "Country",
+    fill = "Items Collected (log scale)",
+    caption = "Source: TidyTuesday 2021-01-26"
+  ) +
+  theme_fivethirtyeight(base_size = 10)
+
+````
+
 ```{r}
+library(ggplot2)
+
+plastics_filtered %>%
+  ggplot(aes(x = plastic_type, y = items_collected, fill = plastic_type)) +
+  geom_col() +
+  facet_wrap(~ country, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Plastic Types Collected by Country",
+    x = "Plastic Type", y = "Items Collected"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
 
 ```{r}
