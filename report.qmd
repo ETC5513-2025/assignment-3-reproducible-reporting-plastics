@@ -108,12 +108,12 @@ ggplot(plastic_counts, aes(x = reorder(plastic_type, total_items), y = total_ite
 The above bar chat indicates which type of plastic were most commonly collected during cleanup events around the world and each bar represents a specific type of plastic, and the height of the bar shows the total number of items made from that material. The chat includes well known plastics like:\
 **PET** (Polyethylene Terephthalate): Commonly used in plastic drink bottles.
 
-**LDPE** (Low-Density Polythylene) : Often found in plastic bags and packing films.
+**LDPE** (Low-Density Polyethylene) : Often found in plastic bags and packing films.
 
 **PP** (Polypropylene): Used in bottles caps, food containers and straws.
 
-**HDPE**
+**HDPE** (High-Density Polyethylene) It is a strong, durable and widely used type of plastic made from petroleum.
 
-**PS** (Polystrene): Found in disposable cutlery and foam packing.
+**PS** (Polystyrene): Found in disposable cutlery and foam packing.
 
-**PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packings
+**PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packing.
