@@ -1,0 +1,45 @@
+---
+title: "Ocean Plastics Pollution"
+author: "Rachna Radhakrishna & Sravan "
+format: html
+editor: visual
+---
+## Executive Summary
+
+This report explores global patterns in plastic pollution based on the 2021 TidyTuesday dataset contributed by Break Free From Plastic. The dataset includes detailed records of plastic items collected during beach cleanups across more than 50 countries, categorized by company (e.g., Coca-Cola, Nestlé), plastic type (e.g., PET, HDPE), and location. Our goal is to identify the top polluting companies globally and analyze variations in plastic waste across regions.
+
+---
+
+## Introduction
+
+Plastic pollution is a pressing environmental issue, particularly in marine ecosystems where accumulated waste threatens wildlife and water quality. The dataset used in this report provides counts of branded and unbranded plastic items collected during cleanup events between 2019 and 2020. Each observation includes country, brand name (if known), type of plastic material, number of volunteers, and total waste collected. This project aims to explore which companies contribute most to this problem, and how their pollution footprint varies by country.
+
+## Methodology
+## Load Library
+
+```{r load-data, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(viridis)
+library(knitr)
+
+plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv")
+
+#glimpse(plastics)
+```
+
+
+---
+
+## What’s in the `plastics.csv` File?
+
+| Column             | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `year`             | Year of the cleanup (mostly 2020)                         |
+| `country`          | Country where cleanup was reported                        |
+| `parent_company`   | Brand or company name (e.g., Coca-Cola, Nestlé)           |
+| `num_events`       | Number of cleanup events held                             |
+| `volunteers`       | Number of participants                                    |
+| `grand_total`      | Total plastic items collected                             |
+| `hdpe`, `ldpe`, etc.| Counts of each plastic type (by material category)       |
+
+---
