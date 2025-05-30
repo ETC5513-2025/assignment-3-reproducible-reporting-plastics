@@ -3,6 +3,7 @@ title: "Ocean Plastics Pollution"
 author: "Rachna Radhakrishna & Sravan Kumar "
 format: 
   html:
+    theme: cosmo
     toc: true
     toc-depth: 2
     toc-title: "Contents"
@@ -10,18 +11,31 @@ editor: visual
 ---
 
 ## Executive Summary
+
 *Sravan edit this please*
+
 This report explores global patterns in plastic pollution based on the 2021 TidyTuesday dataset contributed by Break Free From Plastic. The dataset includes detailed records of plastic items collected during beach cleanups across more than 50 countries, categorized by company (e.g., Coca-Cola, Nestlé), plastic type (e.g., PET, HDPE), and location. Our goal is to identify the top polluting companies globally and analyze variations in plastic waste across regions.
 
 ------------------------------------------------------------------------
 
 ## Introduction
+
 *Sravan edit this please*
+
 Plastic pollution is a pressing environmental issue, particularly in marine ecosystems where accumulated waste threatens wildlife and water quality. The dataset used in this report provides counts of branded and unbranded plastic items collected during cleanup events between 2019 and 2020. Each observation includes country, brand name (if known), type of plastic material, number of volunteers, and total waste collected. This project aims to explore which companies contribute most to this problem, and how their pollution footprint varies by country.
 
 ## Methodology
 
-Before starting the analysis, we cleaned the dataset to make it consistent and easier to work with. Company names were cleaned by fixing capital letters, removing extra spaces, and grouping unclear labels like "Null", "N/A", and "Assorted" under one category called "Unbranded". We also removed rows labeled "Grand Total" since they were just totals and not real data points. Country names were tidied up to fix spelling and formatting issues (like changing "Cote D Ivoire" to "Côte d'Ivoire"). We made sure all plastic count columns were treated as numbers, and replaced missing values with zero when it made sense.
+### Data Cleaning
+
+-   Standardized `parent_company` names:
+    -   Fixed capitalization and trimmed whitespace
+    -   Grouped unclear labels ("Null", "N/A", "Assorted") as `"Unbranded"`
+-   Removed rows labeled `"Grand Total"` (summary rows, not real observations)
+-   Tidied `country` names:
+    -   Fixed formatting (e.g., `"Cote D Ivoire"` → `"Côte d'Ivoire"`)
+-   Ensured all plastic count columns were numeric
+-   Replaced missing values with `0` where appropriate
 
 ```{r load-libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -98,7 +112,9 @@ cleaned_plastics <- plastics %>%
 
 ------------------------------------------------------------------------
 
-###Most Common Plastic Types Collected
+## Key Findings
+
+### Most Common Plastic Types Collected
 
 ```{r simple_bar_plot, echo=FALSE, message=FALSE, warning=FALSE}
 # Define the plastic types
@@ -123,9 +139,8 @@ ggplot(plastic_counts, aes(x = reorder(plastic_type, total_items), y = total_ite
   ) +
   theme_light(base_size = 10)
 
-  
-
 ```
+
 The above bar chat indicates which type of plastic were most commonly collected during cleanup events around the world and each bar represents a specific type of plastic, and the height of the bar shows the total number of items made from that material. The chat includes well known plastics like:\
 **PET** (Polyethylene Terephthalate): Commonly used in plastic drink bottles.
 
@@ -139,8 +154,7 @@ The above bar chat indicates which type of plastic were most commonly collected 
 
 **PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packing.
 
-*@ Sravan please condense the above and connect to next analysis*
-
+*\@ Sravan please condense the above and connect to next analysis*
 
 ### Top Contributing Companies to Plastic Waste
 
@@ -169,7 +183,7 @@ top_companies %>%
 
 ```
 
-Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. Interestingly, the majority of the waste—over 400,000 items—was unbranded, which means it couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever. Overall, the data shows that while big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources. Let's dive deeper into the type of plastic waste generated and which country does so in large masses.
+Table 1 shows the top 10 companies responsible for the most plastic waste, based on the number of plastic items collected. While big companies do play a major role, a significant amount of plastic waste still comes from unknown and difficult to trace sources. Let's dive deeper into the type of plastic waste generated and which country does so in large masses.
 
 ```{r country_plastic_relation, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
 #Get top 10 countries by total plastic collected
@@ -189,13 +203,13 @@ plastic_types_by_country <- cleaned_plastics %>%
   summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
   pivot_longer(-country, names_to = "plastic_type", values_to = "count")
 
-#summary(plastic_types_by_country$count)
-skim(plastic_types_by_country$count)
+summary(plastic_types_by_country$count)
+#skim(plastic_types_by_country$count)
 
 
 ```
-right skew - use lof transform to normalize and visualize
-log transformation on a skewed dataset is a common and effective form of normalization
+
+Upon examination of Figure 1 and and cross checking the summary statistics, we can tell that the data is skewed, so applying a log() transformation helps normalize the distribution and improve visual interpretation.
 
 ```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=10}
 # Top 10 countries
@@ -217,26 +231,77 @@ plastic_types_by_country <- cleaned_plastics %>%
 ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, -count), fill = count)) +
   geom_tile(color = "white") +
   geom_text(aes(label = ifelse(count > 0, count, "")), size = 3, color = "white") +
-  scale_fill_viridis_c(option = "D", trans = "log1p") +
+  scale_fill_viridis_c(option = "E", trans = "log1p") +
   labs(
-    title = "Plastic Types Collected by Top 10 Countries",
+    title = "Fig. 2 - Plastic Types Collected by Top 10 Countries",
     x = "Plastic Type",
     y = "Country",
     fill = "Items Collected (log scale)",
     caption = "Source: TidyTuesday 2021-01-26"
   ) +
-  theme_minimal(base_size = 10)
+  theme_fivethirtyeight(base_size = 10)
 
 ```
 
-This Figure shows the top 10 combinations of countries and type of plastic collected during cleanup events.
-
-Consider an example in the Philippines, the most plastic waste came from products made by Coca-Cola, with over 12,000 pieces found. In Indonesia, a large amount of plastic came from Nestle. Pepsi Co was a major contributor in India and Mexico.
-
-Here the global brands like Coca-Cola, Nestle and Pepsi Co are frequently linked to high plastic waste levels across different countries. This information is important because it can help governments, organizations and companies take responsibility and plan better waste management or packing strategies.
-
-*(@ Sravan Condense this information into valuable insights. Describe based off of heat map)*
+Figure 2 shows the country-wise plastic waste patterns oncovered through collection drives, showing that global brands like Coca-Cola, Nestlé, and PepsiCo are major contributors across multiple countries—e.g., Coca-Cola in the Philippines, Nestlé in Indonesia, and PepsiCo in India and Mexico. These insights underscore the need for targeted corporate accountability and improved waste management strategies.ndefined and type of plastic collected during cleanup events.
 
 
+```{r volunteer_trend_plot, echo=FALSE, message=FALSE, warning=FALSE}
+volunteer_trend_top10 <- cleaned_plastics %>%
+  filter(country %in% top_countries) %>%
+  group_by(country, year) %>%
+  summarise(
+    total_volunteers = sum(volunteers, na.rm = TRUE),
+    total_plastic = sum(grand_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(volunteer_trend_top10, aes(x = reorder(country, -total_volunteers), y = total_volunteers, fill = factor(year))) +
+  geom_col(position = position_dodge(width = 0.6), width = 0.4) +  # thinner bars
+  scale_fill_manual(
+    values = c("2019" = "#00204C", "2020" = "#FDE725"),  # custom colors
+    labels = c("2019", "2020")
+  ) +
+  scale_y_log10(labels = scales::comma_format()) +
+  labs(
+    title = "Fig. 3 - Volunteer Participation (Top 10 Countries, 2019 vs 2020)",
+    x = "Country", y = "Total Volunteers (log scale)",
+    fill = "Year"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 25, hjust = 1),
+    legend.position = "top",
+    panel.grid.major.x = element_blank()
+  )
+
+```
 
 
+
+```{r correlation_plot, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+ggplot(volunteer_trend_top10, aes(x = total_volunteers, y = total_plastic, color = country)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(title = "Correlation: Volunteers vs Plastic Collected (Top 10 Countries)",
+       x = "Total Volunteers",
+       y = "Total Plastic Collected") +
+  theme_fivethirtyeight() +
+  theme(legend.position = "bottom")
+
+```
+
+
+```{r}
+
+```
+
+## Discussion
+
+According to Table 1. Interestingly, the majority of the waste—over 400,000 items—was unbranded, hence couldn’t be traced back to a specific company. This highlights a major gap in accountability when it comes to plastic pollution. Among the branded companies, Coca-Cola had the highest count with 23,823 items, followed by La Doo, Nestlé, and Unilever.
+
+Through keen observation in Fig. 2, the 'o (other/unidentified plastics)' category most countries is the most prevalent, indicating either a lack of thorough categorization or more intricate plastic waste. The patterns of collection differ significantly by nation, probably due to variables like regional consumption patterns, waste management strategies, and brand exposure. Plastic reduction policies and corporate accountability initiatives may focus on nations with greater numbers, such as Taiwan, Nigeria, and the Philippines.
+
+## Conclusion
+
+## References
