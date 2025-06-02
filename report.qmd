@@ -10,14 +10,16 @@ editor: visual
 ---
 
 ## Executive Summary
-*Sravan edit this please*
-This report explores global patterns in plastic pollution based on the 2021 TidyTuesday dataset contributed by Break Free From Plastic. The dataset includes detailed records of plastic items collected during beach cleanups across more than 50 countries, categorized by company (e.g., Coca-Cola, Nestlé), plastic type (e.g., PET, HDPE), and location. Our goal is to identify the top polluting companies globally and analyze variations in plastic waste across regions.
+
+This is a report on Global plastic. Here we mainly focuses on what are the companies that are responsible for most plastic waste, the data is taken from 2021 Tidy Tuesday project, provided by Break Free From Plastic. The data includes plastic items collected during beach cleanups in over 50 countries. It records details such as which type of plastic like PET and HDPE. And the company that produced it like Coca-Cola or Nestle, and where it was found.
+
+Here our main aim is to find out which companies are responsible for the most plastic waste and how plastic pollution differs from country to country. By doing this, we hope to understand where the biggest problems are and suggest ideas for how companies and governments can take better action against plastic pollution.
 
 ------------------------------------------------------------------------
 
 ## Introduction
-*Sravan edit this please*
-Plastic pollution is a pressing environmental issue, particularly in marine ecosystems where accumulated waste threatens wildlife and water quality. The dataset used in this report provides counts of branded and unbranded plastic items collected during cleanup events between 2019 and 2020. Each observation includes country, brand name (if known), type of plastic material, number of volunteers, and total waste collected. This project aims to explore which companies contribute most to this problem, and how their pollution footprint varies by country.
+
+Plastic pollution is a global environmental challenge affecting marine ecosystems and human health. This report uses data from Break Free From Plastic, shared via TidyTuesday, to identify top contributors to plastic waste. By analyzing company-wise and country-wise trends, we aim to uncover key patterns. The dataset includes collection information from global cleanups. The analysis spans plastic types (PET, HDPE, etc.), total items collected, and contributors. Previous studies highlight Coca-Cola, Nestlé, and Unilever as frequent polluters. This report revalidates these findings using 2021 data. It also examines changes over time. Insights can help shape policies. The ultimate goal is actionable recommendations for reducing waste.
 
 ## Methodology
 
@@ -33,13 +35,19 @@ library(forcats)
 library(readr)
 library(kableExtra)
 library(skimr)
+library(stringr)
+library(ggplot2)
 ```
+
+**Loading The Data:**
 
 ```{r load-data-raw, echo=FALSE, message=FALSE, warning=FALSE}
 # Load and clean data
 plastics <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv") %>%
   clean_names()
 ```
+
+**Cleaning Plastic Data Set:**
 
 ```{r clean-data, echo=FALSE, message=FALSE, warning=FALSE}
 # Clean data
@@ -98,7 +106,7 @@ cleaned_plastics <- plastics %>%
 
 ------------------------------------------------------------------------
 
-###Most Common Plastic Types Collected
+**Most Common Plastic Types Collected:**
 
 ```{r simple_bar_plot, echo=FALSE, message=FALSE, warning=FALSE}
 # Define the plastic types
@@ -126,6 +134,7 @@ ggplot(plastic_counts, aes(x = reorder(plastic_type, total_items), y = total_ite
   
 
 ```
+
 The above bar chat indicates which type of plastic were most commonly collected during cleanup events around the world and each bar represents a specific type of plastic, and the height of the bar shows the total number of items made from that material. The chat includes well known plastics like:\
 **PET** (Polyethylene Terephthalate): Commonly used in plastic drink bottles.
 
@@ -139,10 +148,15 @@ The above bar chat indicates which type of plastic were most commonly collected 
 
 **PVC** (Polyvinyl Chloride): Less common, but used in pipes and some packing.
 
-*@ Sravan please condense the above and connect to next analysis*
+**Total Number of Cleanup Events:**
 
+```{r}
+total_events <- sum(cleaned_plastics$num_events, na.rm = TRUE)
 
-### Top Contributing Companies to Plastic Waste
+cat("Total number of cleanup events recorded:", total_events)
+```
+
+### Top Contributing Companies to Plastic Waste:
 
 ```{r top_companies_chunk, echo=FALSE, message=FALSE, warning=FALSE}
 library(kableExtra)
@@ -194,8 +208,10 @@ skim(plastic_types_by_country$count)
 
 
 ```
-right skew - use lof transform to normalize and visualize
-log transformation on a skewed dataset is a common and effective form of normalization
+
+right skewed  - use of transform to normalize and visualize log transformation on a skewed dataset is a common and effective form of normalization.
+
+**Types Collected by Top 10 Countries:**
 
 ```{r fig-country_plastic_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=10}
 # Top 10 countries
@@ -229,14 +245,137 @@ ggplot(plastic_types_by_country, aes(x = plastic_type, y = fct_reorder(country, 
 
 ```
 
-This Figure shows the top 10 combinations of countries and type of plastic collected during cleanup events.
+**Plastic Waste by Country and Type what we found**
 
-Consider an example in the Philippines, the most plastic waste came from products made by Coca-Cola, with over 12,000 pieces found. In Indonesia, a large amount of plastic came from Nestle. Pepsi Co was a major contributor in India and Mexico.
+The heat map represents the top 10 countries with the highest amount of plastic waste collected during cleanup events. It also breaks down which types of plastic were most common in each country. The brighter the color, the more items were found.
 
-Here the global brands like Coca-Cola, Nestle and Pepsi Co are frequently linked to high plastic waste levels across different countries. This information is important because it can help governments, organizations and companies take responsibility and plan better waste management or packing strategies.
+-   In the Philippines most of the waste came from Coca-Coal products over 12,000 pieces.
 
-*(@ Sravan Condense this information into valuable insights. Describe based off of heat map)*
+-   In Indonesia Nestle was linked to a large portion of the waste.
 
+-   Pepsi Co was a major contributor in India and Mexico.
 
+**Plastic Collected Trend Over Years:**
 
+```{r}
+# Plastics collected by year
+yearly_summary <- cleaned_plastics %>%
+  group_by(year) %>%
+  summarise(total_collected = sum(grand_total, na.rm = TRUE))
 
+ggplot(yearly_summary, aes(x = year, y = total_collected)) +
+  geom_line(color = "steelblue", size = 1.2) +
+  geom_point() +
+  labs(title = "Plastic Collection Trend Over Years", x = "Year", y = "Total Plastics") +
+  theme_minimal()
+```
+
+**Top Contributing Companies by countries:**
+
+The below chart shows which company contributed the most plastic waste in each country. Through this it is very helpful in identifying the biggest plastic polluter per country making it clean which companies are causing the most damage in specific regions.
+
+```{r}
+top_company_by_country <- cleaned_plastics %>%
+  group_by(country, parent_company) %>%
+  summarise(total = sum(grand_total, na.rm = TRUE), .groups = "drop") %>%
+  group_by(country) %>%
+  slice_max(total, n = 1)
+
+ggplot(top_company_by_country, aes(x = fct_reorder(country, total), y = total, fill = parent_company)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top Plastic Polluters by Country",
+    x = "Country",
+    y = "Total Plastic",
+    fill = "Company"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
+**Plastic Polluted Density by Country:**
+
+This section lists the top 10 countries where the most sample of plastic waste were collected and it gives an idea of where most of the data was gathered which could be because of more pollution in those places or more people collecting data there. which helps us to understand which countries are most represented in the data set.
+
+```{r}
+pollution_density <- cleaned_plastics %>%
+  count(country, name = "observations") %>%
+  arrange(desc(observations))
+
+pollution_density %>%
+  slice_head(n = 10) %>%
+  kable(
+    caption = "Top 10 Countries by Number of Observations",
+    col.names = c("Country", "Samples Collected")
+  ) %>%
+  kable_styling()
+```
+
+**Plastic Types Shared by Top Companies:**
+
+The bar chart breakdown the types contributed by the top 5 most polluting companies to known which kind of plastic are mostly produced by which company. For example one company might be producing more PET bottles while another might contribute more plastic bags.
+
+```{r}
+top_companies <- cleaned_plastics %>%
+  group_by(parent_company) %>%
+  summarise(total = sum(grand_total, na.rm = TRUE)) %>%
+  arrange(desc(total)) %>%
+  slice_head(n = 5) %>%
+  pull(parent_company)
+
+company_type_share <- cleaned_plastics %>%
+  filter(parent_company %in% top_companies) %>%
+  group_by(parent_company) %>%
+  summarise(across(c(hdpe, ldpe, o, pet, pp, ps, pvc), sum, na.rm = TRUE)) %>%
+  pivot_longer(-parent_company, names_to = "plastic_type", values_to = "count")
+
+ggplot(company_type_share, aes(x = plastic_type, y = count, fill = parent_company)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Plastic Type Distribution for Top 5 Polluting Companies",
+    x = "Plastic Type",
+    y = "Count",
+    fill = "Company"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
+This project investigates the global issue of ocean plastic pollution using data from the 2021 TidyTuesday plastics dataset, originally collected by Break Free From Plastic. The dataset records plastic waste collected during brand audits across multiple countries, identifying both the types of plastic and the companies responsible for producing them.
+
+Our team focused on analyzing contributions to plastic pollution by company, country, and over time. The data was cleaned and standardized to ensure consistent names for companies and plastic types, and non-informative records (like NAs or zero values) were removed to improve data quality.
+
+**Key Analyses Conducted**: Top Polluting Companies: Coca-Cola, Nestlé, and Unilever were found to be the leading contributors to global plastic pollution. These multinational corporations were consistently identified across multiple regions.
+
+**Plastic Types:** PET (Polyethylene Terephthalate) and HDPE (High-Density Polyethylene) emerged as the most commonly found plastic types, often used in bottles and packaging.
+
+**Country Contributions:** Countries like the Philippines, Indonesia, India, and the United States had the highest volumes of collected plastic waste. These patterns may reflect both high consumption and active cleanup participation.
+
+**Trends Over Time:** We analyzed plastic collection by year to identify trends. While collection levels vary, any upward or downward patterns can help assess the impact of policy, awareness, and cleanup programs over time.
+
+**Visuals and Tables:**
+
+Bar charts and summary tables were used to visualize company-wise and plastic-type-wise contributions.
+
+A yearly trend chart was added to highlight plastic waste changes across years.
+
+**Discussion & Recommendations:**
+
+Our findings show that corporate accountability and government policies play a major role in addressing plastic pollution.
+
+**We recommend:**
+
+Stronger enforcement of Extended Producer Responsibility (EPR) policies.
+
+Increased support for brand audits and cleanup efforts.
+
+Encouraging companies to shift toward sustainable packaging materials.
+
+Governments should enforce regulations more strictly to reduce plastic pollution and hold corporations accountable.
+
+**References**
+
+TidyTuesday. (2021). Plastics dataset. Retrieved from
+
+<https://github.com/rfordatascience/tidytuesday/tree/master/data/2021/2021-01-26>
+
+Break Free From Plastic. (2021). Brand audit report. <https://www.breakfreefromplastic.org/>.
